@@ -1,0 +1,19 @@
+{
+  "name": "daemon_curator",
+  "version": "1.0.0",
+  "description": "**NOTE: Use Node.js LTS version v(6.9.1)** **NOTE: NPM v3.8.10**",
+  "main": "curator-daemon.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tekuma/curator_daemon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tekuma/curator_daemon/issues"
+  },
+  "homepage": "https://github.com/tekuma/curator_daemon#readme"
+}
