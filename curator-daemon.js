@@ -25,6 +25,16 @@ const curator  = firebase.initializeApp({
     credential  : firebase.credential.cert(curatorKey)
 }, "curator");
 
+/*
+Restructure:
+- Give 'Held' its own branch
+- when labeled 'held' move into held and remove from submitted
+    - listen for held branch
+    - change reviewmanager code
+- when artwork is resubmitted, it will re-appear in pending
+    - if accepted or declined, move it there and delete from held
+    - if moved to held, overwrite held
+ */
 
 /**
  * Establishes a listen on the /jobs branch of the DB. Any children added
@@ -37,7 +47,7 @@ listenForApprovals = () => {
 }
 
 listenForHeld = () => {
-    let path = 'submissions/';
+    let path = 'held/';
     console.log(">>> Listening for Held...");
     curator.database().ref(path).on('child_added', unlockArtwork);
 }
@@ -57,7 +67,6 @@ unlockArtwork = (snapshot) => {
             let path = `public/onboarders/${artwork.artist_uid}/artworks/${artwork.artwork_uid}`;
             console.log(path);
             firebase.database().ref(path).transaction((data)=>{
-                console.log(data);
                 if (data) {
                     data.submitted = false;
                 }
