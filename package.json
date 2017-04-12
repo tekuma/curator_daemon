@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/tekuma/curator_daemon/issues"
   },
-  "homepage": "https://github.com/tekuma/curator_daemon#readme"
+  "homepage": "https://github.com/tekuma/curator_daemon#readme",
+  "dependencies": {
+    "async": "^2.3.0",
+    "mysql": "^2.13.0",
+    "uuid": "^3.0.1"
+  }
 }
