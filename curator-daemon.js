@@ -274,128 +274,124 @@ markAsInserted = (artwork_uid) => {
 // =========== Exec ===========
 
 // --- Run these 2 functions to run the daemon ----
-// listenForHeld();
-// listenForApprovals();
+listenForHeld();
+listenForApprovals();
 
-let artwork = {
-      "album" : "Vincent",
-      "approved" : 1486308100304,
-      "artist_name" : "Afika Nyati",
-      "artist_uid" : "x4hhJGNPx9g3jH2iikX60tdnn6p1",
-      "artwork_name" : "The Starry Night",
-      "artwork_uid" : "-KcDphAm1fx6U6CYzYtr",
-      "colors" : [ {
-        "density" : 0.34575,
-        "hex" : "#566f88",
-        "w3c" : {
-          "hex" : "#708090",
-          "name" : "SlateGray"
-        }
-      }, {
-        "density" : 0.13825,
-        "hex" : "#28345a",
-        "w3c" : {
-          "hex" : "#483d8b",
-          "name" : "DarkSlateBlue"
-        }
-      }, {
-        "density" : 0.177,
-        "hex" : "#2c3d89",
-        "w3c" : {
-          "hex" : "#483d8b",
-          "name" : "DarkSlateBlue"
-        }
-      }, {
-        "density" : 0.02325,
-        "hex" : "#98994f",
-        "w3c" : {
-          "hex" : "#bdb76b",
-          "name" : "DarkKhaki"
-        }
-      }, {
-        "density" : 0.183,
-        "hex" : "#222523",
-        "w3c" : {
-          "hex" : "#000000",
-          "name" : "Black"
-        }
-      }, {
-        "density" : 0.13275,
-        "hex" : "#8f9a8a",
-        "w3c" : {
-          "hex" : "#a9a9a9",
-          "name" : "DarkGray"
-        }
-      } ],
-      "description" : "This is a collection of famous Van Gogh oil paintings.",
-      "memo" : "Your use of thick brush strokes to evoke movement, combined with your rich color choices result in a really beautiful artwork!",
-      "new_message" : true,
-      "reviewer" : "Afika",
-      "size" : 345814,
-      "status" : "Approved",
-      "submitted" : "2017-02-05T15:19:43.674Z",
-      "tags" : [ {
-        "id" : 1,
-        "text" : "pattern"
-      }, {
-        "id" : 2,
-        "text" : "art"
-      }, {
-        "id" : 3,
-        "text" : "abstract"
-      }, {
-        "id" : 4,
-        "text" : "painting"
-      }, {
-        "id" : 5,
-        "text" : "design"
-      }, {
-        "id" : 6,
-        "text" : "illustration"
-      }, {
-        "id" : 7,
-        "text" : "desktop"
-      }, {
-        "id" : 8,
-        "text" : "texture"
-      }, {
-        "id" : 9,
-        "text" : "nature"
-      }, {
-        "id" : 10,
-        "text" : "water"
-      }, {
-        "id" : 11,
-        "text" : "color"
-      }, {
-        "id" : 12,
-        "text" : "image"
-      }, {
-        "id" : 13,
-        "text" : "artistic"
-      }, {
-        "id" : 14,
-        "text" : "wallpaper"
-      }, {
-        "id" : 15,
-        "text" : "canvas"
-      }, {
-        "id" : 16,
-        "text" : "no person"
-      } ],
-      "upload_date" : "2017-02-05T15:14:08.692Z",
-      "year" : 2017
-};
-
+// let artwork = {
+//       "album" : "Vincent",
+//       "approved" : 1486308100304,
+//       "artist_name" : "Afika Nyati",
+//       "artist_uid" : "x4hhJGNPx9g3jH2iikX60tdnn6p1",
+//       "artwork_name" : "The Starry Night",
+//       "artwork_uid" : "-KcDphAm1fx6U6CYzYtr",
+//       "colors" : [ {
+//         "density" : 0.34575,
+//         "hex" : "#566f88",
+//         "w3c" : {
+//           "hex" : "#708090",
+//           "name" : "SlateGray"
+//         }
+//       }, {
+//         "density" : 0.13825,
+//         "hex" : "#28345a",
+//         "w3c" : {
+//           "hex" : "#483d8b",
+//           "name" : "DarkSlateBlue"
+//         }
+//       }, {
+//         "density" : 0.177,
+//         "hex" : "#2c3d89",
+//         "w3c" : {
+//           "hex" : "#483d8b",
+//           "name" : "DarkSlateBlue"
+//         }
+//       }, {
+//         "density" : 0.02325,
+//         "hex" : "#98994f",
+//         "w3c" : {
+//           "hex" : "#bdb76b",
+//           "name" : "DarkKhaki"
+//         }
+//       }, {
+//         "density" : 0.183,
+//         "hex" : "#222523",
+//         "w3c" : {
+//           "hex" : "#000000",
+//           "name" : "Black"
+//         }
+//       }, {
+//         "density" : 0.13275,
+//         "hex" : "#8f9a8a",
+//         "w3c" : {
+//           "hex" : "#a9a9a9",
+//           "name" : "DarkGray"
+//         }
+//       } ],
+//       "description" : "This is a collection of famous Van Gogh oil paintings.",
+//       "memo" : "Your use of thick brush strokes to evoke movement, combined with your rich color choices result in a really beautiful artwork!",
+//       "new_message" : true,
+//       "reviewer" : "Afika",
+//       "size" : 345814,
+//       "status" : "Approved",
+//       "submitted" : "2017-02-05T15:19:43.674Z",
+//       "tags" : [ {
+//         "id" : 1,
+//         "text" : "pattern"
+//       }, {
+//         "id" : 2,
+//         "text" : "art"
+//       }, {
+//         "id" : 3,
+//         "text" : "abstract"
+//       }, {
+//         "id" : 4,
+//         "text" : "painting"
+//       }, {
+//         "id" : 5,
+//         "text" : "design"
+//       }, {
+//         "id" : 6,
+//         "text" : "illustration"
+//       }, {
+//         "id" : 7,
+//         "text" : "desktop"
+//       }, {
+//         "id" : 8,
+//         "text" : "texture"
+//       }, {
+//         "id" : 9,
+//         "text" : "nature"
+//       }, {
+//         "id" : 10,
+//         "text" : "water"
+//       }, {
+//         "id" : 11,
+//         "text" : "color"
+//       }, {
+//         "id" : 12,
+//         "text" : "image"
+//       }, {
+//         "id" : 13,
+//         "text" : "artistic"
+//       }, {
+//         "id" : 14,
+//         "text" : "wallpaper"
+//       }, {
+//         "id" : 15,
+//         "text" : "canvas"
+//       }, {
+//         "id" : 16,
+//         "text" : "no person"
+//       } ],
+//       "upload_date" : "2017-02-05T15:14:08.692Z",
+//       "year" : 2017
+// };
+//
 
 // ---- Use these lines to communicate directly to the DB. -----
 
 // let db = connectSQL();
-// let labels = extractLabels(artwork);
-// let thing = generateArtworkInsertQuery(artwork,db,labels);
-//
-// let thing = "SELECT * FROM artworks WHERE TITLE ='bridge1';"
-// let thing2= "SHOW COLUMNS FROM artworks"
+// let thing = "SHOW COLUMNS FROM artworks"
 // db.query(thing, (err,res,fld)=>{
 //     console.log("err",err);
 //     console.log("res",res);
