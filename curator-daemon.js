@@ -106,8 +106,8 @@ connectSQL = () => {
     } else {
         console.log("> DB Conf file lacks proper ssl information or is not located in ./cert");
     }
-    dbconf.charset = 'utf8';
-
+    dbconf.charset = 'utf8'; // just common sense
+    dbconf.multipleStatements = true; // transactions require multiple statements.
     let db = mysql.createConnection(dbconf);
     db.connect();
     console.log(">> Connection to MySQL Instance Succesful.");
@@ -160,59 +160,30 @@ extractLabels = (artwork) => {
 }
 
 /**
- * NOTE: this is not atomic. It may fail partially. But, only successes are marked sucessful
- *       so that all failures can be re-ran (possibly duplicating labels).
- * FIXME: Methods should be added to un-do insertions that occured on partial failures.
- *
- * This method should handle extracting all of the artworks data from JSON form,
- * restructuring it, and inserting it into the cloudsql database. On sucesful
- * insertion, the firebase database should be updated to reflect this.
+ * This method first translates all the snapshot into valid data, and then forms
+ * a TRANSACTION for all of the artwork's data. Additionally, an attempt is made
+ * to insert the artist info in a separte query, which could be rejected as a
+ * duplicate, or inserted.
  * If you need to check the columns of a table, use the query:
  * `SHOW COLUMNS FROM ${table_name};`
  * @param  {DataSnapshot} snapshot [firebase snapshot of the artwork's JSON]
  */
 handleSqlInsert = (snapshot) => {
     let artwork = snapshot.val();
-    // console.log(artwork.sql, artwork.artwork_uid);
     if (!artwork.sql && snapshot.key != "0") { // if not already inserted / placeholder (0)
         console.log("==> Artowrk: ", snapshot.key, "Is about to be inserted into SQL DB.");
         const db = connectSQL();
-
-        insertArtwork(artwork,db).then((success)=>{
-            if (success) {
-                insertArtist(artwork,db).then( (success2)=>{
-                    if (success2) {
-                        let labels = extractLabels(artwork);
-                        insertLables(labels,db).then((success3)=>{
-                            if (success3) {
-                                insertAssociations(artwork,labels,db).then((success)=>{
-                                    if (success) {
-                                        console.log("SUCCESSFULLY Inserted entire artwork.");
-                                        markAsInserted(artwork.artwork_uid);
-                                    } else {
-                                        console.log("Failed to insert all parts. See above.");
-                                        //TODO add sql query to revert all prior inserts on this artwork.
-                                    }
-                                    db.end();
-
-                                });
-                            } else {
-                                console.log("Failed to insert all parts. See above.");
-                                db.end();
-                                //TODO add sql query to revert prior inserts for this artwork.
-                            }
-                        });
-                    } else {
-                        console.log("Failed to insert all parts. See above.");
-                        db.end();
-                        //NOTE:
-
-                    }
-                });
-            } else {
-                console.log("Failed to insert all parts. See above.");
-                db.end();
-            }
+        let artwork_query = generateArtworkInsertQuery(artwork,db);
+        db.query(artwork_query, (err,res,fld)=>{
+            if (err) console.log(err);
+            console.log(res);
+            insertArtist(artwork,db).then( (success)=>{
+                if (success) {
+                    console.log("Artwork and Artist Inserted");
+                } else {
+                    console.log("Artwork Inserted");
+                }
+            });
         });
     }
 }
@@ -235,37 +206,26 @@ handleSqlInsert = (snapshot) => {
  * @param  {MySQL_Connection} db
  * @return {Promise} passed a boolean. True if Succesful, False if error.
  */
-insertArtwork = (artwork, db) =>{
-    console.log("==> Inserting artwork");
-    return new Promise((resolve, reject)=>{
-        let thumbnail = `https://storage.googleapis.com/art-uploads/portal/${artwork.artist_uid}/thumb128/${artwork.artwork_uid}`;
-        let date = sqlizeDate(artwork.submitted);
+generateArtworkInsertQuery = (artwork, db) =>{
+    let labels = extractLabels(artwork);
+    let theQuery  = "START TRANSACTION; \n";
+    let thumbnail = `https://storage.googleapis.com/art-uploads/portal/${artwork.artist_uid}/thumb128/${artwork.artwork_uid}`;
+    let date = sqlizeDate(artwork.submitted);
 
-        // insert the artwork first
-        let insert_artwork = "INSERT INTO artworks (uid,title,description,artist_uid,date_of_addition,thumbnail_url,origin) VALUES (?, ?, ?, ?, ?, ?, ?);";
-        let keys = [
-            artwork.artwork_uid,
-            artwork.artwork_name,
-            artwork.description || null,
-            artwork.artist_uid,
-            date,
-            thumbnail,
-            "portal"
-        ];
-        db.query(insert_artwork,keys, (err,res,fields)=>{
-            if (err) {
-                console.log(err);
-                resolve(false);
-            } else {
-                console.log(res);
-                resolve(true);
-            }
-        });
-    });
+    let art_query  = `INSERT INTO artworks (uid,title,description,artist_uid,date_of_addition,thumbnail_url,origin) VALUES ('${artwork.artwork_uid}', '${artwork.artwork_name}', '${artwork.description}', '${artwork.artist_uid}', '${date}', '${thumbnail}', 'portal'); \n`;
+    theQuery = theQuery.concat(art_query);
+    for (let label of labels) {
+        let quer = `INSERT INTO labels (uid,val,labeltype,origin)  VALUES ('${label.uid}', '${label.label}', '${label.type}', '${label.source}') ; \n`;
+        let assoc = `INSERT INTO associations (label_uid, object_uid, object_table) VALUES ('${label.uid}', '${artwork.artwork_uid}', 'artworks'); \n`;
+        theQuery = theQuery.concat(quer,assoc);
+    }
+
+    return theQuery.concat("COMMIT;");
 }
 
 /**
- * Inserts the artist into the table.
+ * Inserts the artist into the table. Is usually expected to throw an error,
+ * as it is called on every insert, and could very well be a duplicate.
  *- TABLE: artists.
  *   - uid (char)
      - artist (text)
@@ -286,91 +246,12 @@ insertArtist = (artwork,db) =>{
                 resolve(false);
             } else {
                 console.log(res);
-                resolve(res);
+                resolve(true);
             }
             console.log(res);
         });
     });
 }
-
-/**
- * This method runs an async-for-loop over all input labels, and forms an
- * INSERT query for each (FIXME: is there a better way to bulk insert?)
- * Then, after the for-loop finishes, the promise is resolved.
- * @param  {Array} labels [description]
- * @return {Promise}      [description]
- */
-insertLables = (labels,db) =>{
-    console.log("==> Inserting labels");
-    return new Promise((resolve, reject)=>{
-        // Use an asnyc-for-loop so we know when the last loop terminates.
-        eachOf(labels,(label,key,callback)=>{
-            console.log(key);
-            let quer = "INSERT INTO labels (uid,val,labeltype,origin)  VALUES (?, ?, ?, ?) ";
-            let keys = [label.uid, label.label, label.type, label.source];
-            db.query(quer, keys, (err,res,fields)=>{
-                if (err) {
-                    console.log("--- Error in INSERT ---:", label);
-                    console.log(err);
-                    callback(err);
-                } else {
-                    console.log(res);
-                    console.log("Label ", key, " inserted Successfully.");
-                    callback(); // callback fires after every callback() is called.
-                }
-            });
-        }, (err)=>{
-            if (err) {
-                console.log(err);
-                resolve(false);
-            } else {
-                console.log("finished all queries.");
-                resolve(true);
-            }
-        });
-    });
-}
-
-/**
- * TABLE: associations:
- * - label_uid
- * - object_uid  (artwork uid)
- * - object_table (artworks)
- * @param  {JSON} artwork
- * @param  {JSON} labels
- * @param  {MySQL_Connection} db
- * @return {Promise}  boolean
- */
-insertAssociations = (artwork,labels,db) => {
-    console.log("==> Inserting associations");
-    return new Promise((resolve, reject)=>{
-        // first, associate the artwork to the artist.
-        eachOf(labels, (label,key,callback)=>{
-            let ass = "INSERT INTO associations (label_uid, object_uid, object_table) VALUES (?, ?, ?);"
-            let keys = [label.uid, artwork.artwork_uid, "artworks"];
-            db.query(ass, keys, (err,res,fld)=>{
-                if (err) {
-                    console.log("--- Error in INSERT ---:", label);
-                    console.log(err);
-                    callback(err);
-                } else {
-                    console.log(res);
-                    console.log("Association ", key, " inserted Successfully.");
-                    callback(); // callback fires after every callback() is called.
-                }
-            });
-        }, (err)=>{
-            if (err) {
-                console.log(err);
-                resolve(false);
-            } else {
-                console.log("finished all queries.");
-                resolve(true);
-            }
-        });
-    });
-}
-
 
 
 /**
@@ -393,8 +274,8 @@ markAsInserted = (artwork_uid) => {
 // =========== Exec ===========
 
 // --- Run these 2 functions to run the daemon ----
-listenForHeld();
-listenForApprovals();
+// listenForHeld();
+// listenForApprovals();
 
 let artwork = {
       "album" : "Vincent",
@@ -510,20 +391,13 @@ let artwork = {
 // ---- Use these lines to communicate directly to the DB. -----
 
 // let db = connectSQL();
-// let query = "SELECT * FROM artworks WHERE uid='-KRBhVSafp6JNq5aiRMH';";
-let insert_artwork = "INSERT INTO artworks (uid,title,description,artist_uid,date_of_addition,thumbnail_url,origin) VALUES (?, ?, ?, ?, ?, ?, ?);";
-let keys = [
-    artwork.artwork_uid,
-    artwork.artwork_name,
-    artwork.description || null,
-    artwork.artist_uid,
-    `2017-02-05 15:19:43`,
-    `thumbnail`,
-    "portal"
-];
-
-// db.query(query, (err,res,fld)=>{
+// let labels = extractLabels(artwork);
+// let thing = generateArtworkInsertQuery(artwork,db,labels);
+//
+// let thing = "SELECT * FROM artworks WHERE TITLE ='bridge1';"
+// let thing2= "SHOW COLUMNS FROM artworks"
+// db.query(thing, (err,res,fld)=>{
 //     console.log("err",err);
 //     console.log("res",res);
-//     console.log("fld",fld);
+//     // console.log("fld",fld);
 // });
