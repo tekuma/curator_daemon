@@ -160,6 +160,10 @@ extractLabels = (artwork) => {
 }
 
 /**
+ * NOTE: this is not atomic. It may fail partially. But, only successes are marked sucessful
+ *       so that all failures can be re-ran (possibly duplicating labels).
+ * FIXME: Methods should be added to un-do insertions that occured on partial failures.
+ *
  * This method should handle extracting all of the artworks data from JSON form,
  * restructuring it, and inserting it into the cloudsql database. On sucesful
  * insertion, the firebase database should be updated to reflect this.
@@ -187,17 +191,22 @@ handleSqlInsert = (snapshot) => {
                                         markAsInserted(artwork.artwork_uid);
                                     } else {
                                         console.log("Failed to insert all parts. See above.");
+                                        //TODO add sql query to revert all prior inserts on this artwork.
                                     }
                                     db.end();
+
                                 });
                             } else {
                                 console.log("Failed to insert all parts. See above.");
                                 db.end();
+                                //TODO add sql query to revert prior inserts for this artwork.
                             }
                         });
                     } else {
                         console.log("Failed to insert all parts. See above.");
                         db.end();
+                        //NOTE:
+
                     }
                 });
             } else {
@@ -384,9 +393,8 @@ markAsInserted = (artwork_uid) => {
 // =========== Exec ===========
 
 // --- Run these 2 functions to run the daemon ----
-// listenForHeld();
+listenForHeld();
 listenForApprovals();
-
 
 let artwork = {
       "album" : "Vincent",
@@ -503,6 +511,19 @@ let artwork = {
 
 // let db = connectSQL();
 // let query = "SELECT * FROM artworks WHERE uid='-KRBhVSafp6JNq5aiRMH';";
+let insert_artwork = "INSERT INTO artworks (uid,title,description,artist_uid,date_of_addition,thumbnail_url,origin) VALUES (?, ?, ?, ?, ?, ?, ?);";
+let keys = [
+    artwork.artwork_uid,
+    artwork.artwork_name,
+    artwork.description || null,
+    artwork.artist_uid,
+    `2017-02-05 15:19:43`,
+    `thumbnail`,
+    "portal"
+];
+
 // db.query(query, (err,res,fld)=>{
-//     console.log(res);
+//     console.log("err",err);
+//     console.log("res",res);
+//     console.log("fld",fld);
 // });
