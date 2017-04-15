@@ -84,11 +84,13 @@ sqlizeDate = (date) => {
     // date could be in form 1491930244646
     if (typeof date == 'number') {
         date = new Date(date).toISOString();
+    } else if (date) {
+        date = date.replace("T"," ");
+        date = date.replace(".","");
+        date = date.substring(0,19);
+        return date;
     }
-    date = date.replace("T"," ");
-    date = date.replace(".","");
-    date = date.substring(0,19);
-    return date;
+    return null;
 }
 
 /**
@@ -120,6 +122,8 @@ connectSQL = () => {
  *       - dominant-color
  *       - clarifai-w3c-color-density
  *       - clarifai-text-tag
+ * NOTE: We accept arbitrary strings into the query. Is this safe from injection
+ * attacks?
  * @param  {JSON} artwork  the artwork object from the /approved branch.
  * @return {Array} an array of objects (labels)
  */
@@ -253,7 +257,6 @@ insertArtist = (artwork,db) =>{
     });
 }
 
-
 /**
  * Mutates the object at in the approved branch to have property
  * of sql set to true to reflect that it has been inserted into the central
@@ -274,8 +277,8 @@ markAsInserted = (artwork_uid) => {
 // =========== Exec ===========
 
 // --- Run these 2 functions to run the daemon ----
-listenForHeld();
-listenForApprovals();
+// listenForHeld();
+// listenForApprovals();
 
 // let artwork = {
 //       "album" : "Vincent",
@@ -390,10 +393,10 @@ listenForApprovals();
 
 // ---- Use these lines to communicate directly to the DB. -----
 
-// let db = connectSQL();
-// let thing = "SHOW COLUMNS FROM artworks"
-// db.query(thing, (err,res,fld)=>{
-//     console.log("err",err);
-//     console.log("res",res);
-//     // console.log("fld",fld);
-// });
+let db = connectSQL();
+let thing = "SHOW COLUMNS FROM artworks"
+db.query(thing, (err,res,fld)=>{
+    console.log("err",err);
+    console.log("res",res);
+    // console.log("fld",fld);
+});
