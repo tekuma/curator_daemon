@@ -186,6 +186,7 @@ handleSqlInsert = (snapshot) => {
                 } else {
                     console.log("Artwork Inserted");
                 }
+                markAsInserted(artwork.artwork_uid);
             });
         });
     }
