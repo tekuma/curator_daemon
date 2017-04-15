@@ -10,8 +10,8 @@ const firebase = require('firebase-admin');
 const gcloud   = require('google-cloud');
 const eachOf   = require('async/eachOf');
 const mysql    = require('mysql');
-const fs       = require('fs');
 const uuid     = require('uuid/v4');
+const fs       = require('fs');
 
 //Keys
 const serviceKey = require('./auth/artistKey.json');
@@ -84,13 +84,12 @@ sqlizeDate = (date) => {
     // date could be in form 1491930244646
     if (typeof date == 'number') {
         date = new Date(date).toISOString();
-    } else if (date) {
-        date = date.replace("T"," ");
-        date = date.replace(".","");
-        date = date.substring(0,19);
-        return date;
     }
-    return null;
+    date = date.replace("T"," ");
+    date = date.replace(".","");
+    date = date.substring(0,19);
+    return date;
+
 }
 
 /**
