@@ -277,8 +277,8 @@ markAsInserted = (artwork_uid) => {
 // =========== Exec ===========
 
 // --- Run these 2 functions to run the daemon ----
-// listenForHeld();
-// listenForApprovals();
+listenForHeld();
+listenForApprovals();
 
 // let artwork = {
 //       "album" : "Vincent",
@@ -393,10 +393,10 @@ markAsInserted = (artwork_uid) => {
 
 // ---- Use these lines to communicate directly to the DB. -----
 
-let db = connectSQL();
-let thing = "SHOW COLUMNS FROM artworks"
-db.query(thing, (err,res,fld)=>{
-    console.log("err",err);
-    console.log("res",res);
-    // console.log("fld",fld);
-});
+// let db = connectSQL();
+// let thing = "SHOW COLUMNS FROM artworks"
+// db.query(thing, (err,res,fld)=>{
+//     console.log("err",err);
+//     console.log("res",res);
+//     // console.log("fld",fld);
+// });
